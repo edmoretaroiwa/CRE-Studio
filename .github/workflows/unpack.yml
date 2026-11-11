@@ -1,7 +1,8 @@
 name: Unpack upload
 on:
+  workflow_dispatch:
   push:
-    paths: ['CRE-Studio-v1.zip']
+    paths: ['*.zip']
 permissions:
   contents: write
 jobs:
@@ -10,13 +11,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          unzip -q CRE-Studio-v1.zip -d /tmp/x
-          test -d /tmp/x/CRE-Studio/app/src/main/java/com/cre/studio/ui
-          rm -rf /tmp/x/CRE-Studio/.github
-          cp -r /tmp/x/CRE-Studio/. .
-          rm CRE-Studio-v1.zip
-      - run: |
+      - name: Unzip
+        run: |
+          ZIP=$(ls *.zip | head -n 1)
+          echo "Using $ZIP"
+          rm -rf /tmp/x && mkdir /tmp/x
+          unzip -q "$ZIP" -d /tmp/x
+          SRC=$(dirname "$(find /tmp/x -name settings.gradle.kts | head -n 1)")
+          if [ ! -f "$SRC/app/src/main/java/com/cre/studio/ui/Components3D.kt" ]; then
+            echo "This zip is the OLD prototype. Upload CRE-Studio-v1.zip instead."
+            exit 1
+          fi
+          rm -rf "$SRC/.git" "$SRC/.github"
+          cp -r "$SRC"/. .
+          rm -f *.zip
+      - name: Commit
+        run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add -A
