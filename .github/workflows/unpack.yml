@@ -12,6 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           unzip -q CRE-Studio-v1.zip -d /tmp/x
+          test -d /tmp/x/CRE-Studio/app/src/main/java/com/cre/studio/ui
           rm -rf /tmp/x/CRE-Studio/.github
           cp -r /tmp/x/CRE-Studio/. .
           rm CRE-Studio-v1.zip
