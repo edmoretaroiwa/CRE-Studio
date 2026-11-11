@@ -5,7 +5,7 @@ on:
     paths: ['*.zip']
 permissions:
   contents: write
-  workflows: write # Crucial for pushing changes to .github
+  workflows: write # THIS IS CRUCIAL. Prevents push rejection.
 
 jobs:
   unpack:
@@ -16,10 +16,10 @@ jobs:
       
       - name: Unzip and Check
         run: |
-          # Find the zip file safely
+          # 1. Find the zip file
           ZIP=$(find . -maxdepth 1 -name "*.zip" | head -n 1)
           if [ -z "$ZIP" ]; then
-            echo "No zip file found!"
+            echo "Error: No zip file found in root!"
             exit 1
           fi
           
@@ -27,31 +27,30 @@ jobs:
           rm -rf /tmp/x && mkdir /tmp/x
           unzip -q "$ZIP" -d /tmp/x
           
-          echo "--- Contents of /tmp/x ---"
+          # 2. Print contents for debugging
+          echo "--- Contents of unzipped directory ---"
           ls -la /tmp/x
           
-          # Find the settings.gradle.kts to locate the root
+          # 3. Find the Gradle root
           SETTINGS_FILE=$(find /tmp/x -name settings.gradle.kts | head -n 1)
           if [ -z "$SETTINGS_FILE" ]; then
-             echo "settings.gradle.kts not found in the zip!"
+             echo "Error: settings.gradle.kts not found inside the zip!"
              exit 1
           fi
           
           SRC=$(dirname "$SETTINGS_FILE")
           echo "Found source directory at: $SRC"
-          echo "--- Contents of $SRC ---"
-          ls -la "$SRC"
           
-          # Remove git history of the unzipped folder if it exists
+          # 4. Remove git history from the extracted folder
           rm -rf "$SRC/.git" "$SRC/.github"
           
-          # Copy everything including hidden files
+          # 5. Copy everything to the root of the repo
           cp -r "$SRC"/. .
           
-          # Delete the zip so it doesn't trigger the workflow again
+          # 6. Delete the zip so it doesn't trigger again
           rm -f *.zip
           
-      - name: Commit
+      - name: Commit and Push
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
@@ -59,6 +58,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Unpack CRE Studio"
+            git commit -m "Unpack CRE Studio source code"
             git push
           fi
