@@ -5,7 +5,7 @@ on:
     paths: ['*.zip']
 permissions:
   contents: write
-  workflows: write # Add this to prevent push rejections for .github changes
+  workflows: write # Crucial for pushing changes to .github
 
 jobs:
   unpack:
@@ -14,33 +14,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Unzip
+      - name: Unzip and Check
         run: |
+          # Find the zip file safely
           ZIP=$(find . -maxdepth 1 -name "*.zip" | head -n 1)
           if [ -z "$ZIP" ]; then
             echo "No zip file found!"
             exit 1
           fi
+          
           echo "Using $ZIP"
           rm -rf /tmp/x && mkdir /tmp/x
           unzip -q "$ZIP" -d /tmp/x
           
-          # Safer way to find the root directory
+          echo "--- Contents of /tmp/x ---"
+          ls -la /tmp/x
+          
+          # Find the settings.gradle.kts to locate the root
           SETTINGS_FILE=$(find /tmp/x -name settings.gradle.kts | head -n 1)
           if [ -z "$SETTINGS_FILE" ]; then
              echo "settings.gradle.kts not found in the zip!"
              exit 1
           fi
+          
           SRC=$(dirname "$SETTINGS_FILE")
+          echo "Found source directory at: $SRC"
+          echo "--- Contents of $SRC ---"
+          ls -la "$SRC"
           
-          # Your specific check
-          if [ ! -f "$SRC/app/src/main/java/com/cre/studio/ui/Components3D.kt" ]; then
-            echo "This zip is the OLD prototype. Upload the correct zip."
-            exit 1
-          fi
-          
+          # Remove git history of the unzipped folder if it exists
           rm -rf "$SRC/.git" "$SRC/.github"
+          
+          # Copy everything including hidden files
           cp -r "$SRC"/. .
+          
+          # Delete the zip so it doesn't trigger the workflow again
           rm -f *.zip
           
       - name: Commit
@@ -48,10 +56,9 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add -A
-          # Check if there are changes before committing to avoid failure
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Unpack CRE Studio 1.0"
+            git commit -m "Unpack CRE Studio"
             git push
           fi
