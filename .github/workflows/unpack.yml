@@ -5,7 +5,7 @@ on:
     paths: ['*.zip']
 permissions:
   contents: write
-  workflows: write # THIS IS CRUCIAL. Prevents push rejection.
+  workflows: write # Crucial to prevent push errors
 
 jobs:
   unpack:
@@ -16,10 +16,9 @@ jobs:
       
       - name: Unzip and Check
         run: |
-          # 1. Find the zip file
           ZIP=$(find . -maxdepth 1 -name "*.zip" | head -n 1)
           if [ -z "$ZIP" ]; then
-            echo "Error: No zip file found in root!"
+            echo "No zip file found!"
             exit 1
           fi
           
@@ -27,27 +26,23 @@ jobs:
           rm -rf /tmp/x && mkdir /tmp/x
           unzip -q "$ZIP" -d /tmp/x
           
-          # 2. Print contents for debugging
-          echo "--- Contents of unzipped directory ---"
-          ls -la /tmp/x
-          
-          # 3. Find the Gradle root
+          # Find the root of the project
           SETTINGS_FILE=$(find /tmp/x -name settings.gradle.kts | head -n 1)
           if [ -z "$SETTINGS_FILE" ]; then
-             echo "Error: settings.gradle.kts not found inside the zip!"
+             echo "Error: settings.gradle.kts not found!"
              exit 1
           fi
           
           SRC=$(dirname "$SETTINGS_FILE")
           echo "Found source directory at: $SRC"
           
-          # 4. Remove git history from the extracted folder
+          # Clean up any git history inside the extracted folder
           rm -rf "$SRC/.git" "$SRC/.github"
           
-          # 5. Copy everything to the root of the repo
+          # Copy everything to the root
           cp -r "$SRC"/. .
           
-          # 6. Delete the zip so it doesn't trigger again
+          # Delete the zip so it doesn't trigger the workflow infinitely
           rm -f *.zip
           
       - name: Commit and Push
