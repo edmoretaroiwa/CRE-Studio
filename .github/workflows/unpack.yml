@@ -1,0 +1,23 @@
+name: Unpack upload
+on:
+  push:
+    paths: ['CRE-Studio-v1.zip']
+permissions:
+  contents: write
+jobs:
+  unpack:
+    if: ${{ !contains(github.event.head_commit.message, 'Unpack') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          unzip -q CRE-Studio-v1.zip -d /tmp/x
+          rm -rf /tmp/x/CRE-Studio/.github
+          cp -r /tmp/x/CRE-Studio/. .
+          rm CRE-Studio-v1.zip
+      - run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -m "Unpack CRE Studio 1.0"
+          git push
