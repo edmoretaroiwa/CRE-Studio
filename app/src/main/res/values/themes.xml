@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme. We inherit from the built-in Android Dark theme -->
+    <style name="Theme.CREStudio" parent="android:Theme.Material.NoActionBar">
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">#121212</item>
+        <!-- Navigation bar color. -->
+        <item name="android:navigationBarColor">#121212</item>
+    </style>
+</resources>
