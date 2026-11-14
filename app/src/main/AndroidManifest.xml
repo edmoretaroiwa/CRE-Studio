@@ -3,7 +3,7 @@
         android:allowBackup="true"
         android:label="CRE Studio"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Material3.Dark.NoActionBar">
+        android:theme="@style/Theme.CREStudio"> <!-- CHANGED THIS LINE -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
